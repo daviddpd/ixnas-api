@@ -79,11 +79,30 @@ u = config.get(args.host[0], "user");
 p = config.get(args.host[0], "password");
 bp = config.get(args.host[0], "basepath");        
 
-iscsi_target_authgroup=config.get(args.host[0], "iscsi_target_authgroup");        
-iscsi_target_authtype=config.get(args.host[0], "iscsi_target_authtype");        
-iscsi_target_portalgroup=config.get(args.host[0], "iscsi_target_portalgroup");        
-iscsi_target_initiatorgroup=config.get(args.host[0], "iscsi_target_initiatorgroup");        
-iscsi_target_initialdigest=config.get(args.host[0], "iscsi_target_initialdigest");        
+try:
+    iscsi_target_authgroup=config.get(args.host[0], "iscsi_target_authgroup");        
+except:
+    iscsi_target_authgroup=''
+
+try:
+    iscsi_target_authtype=config.get(args.host[0], "iscsi_target_authtype");
+except:
+    iscsi_target_authtype=''
+
+try:
+    iscsi_target_portalgroup=config.get(args.host[0], "iscsi_target_portalgroup");        
+except:
+    iscsi_target_portalgroup=''
+
+try:
+    iscsi_target_initiatorgroup=config.get(args.host[0], "iscsi_target_initiatorgroup");        
+except:
+    iscsi_target_initiatorgroup=''
+
+try:    
+    iscsi_target_initialdigest=config.get(args.host[0], "iscsi_target_initialdigest");        
+except:
+    iscsi_target_initialdigest=''
 
 if len(bp):
     match = re.search("^" + bp + "/", args.name[0])
@@ -141,6 +160,7 @@ pp.pprint( target.json() );
 targetgroup_data = json.dumps({
   "iscsi_target": t['id'],
   "iscsi_target_portalgroup": iscsi_target_portalgroup,
+  "iscsi_target_initiatorgroup": iscsi_target_initiatorgroup, 
 })
 
 targetgroup = requests.post(
@@ -159,6 +179,7 @@ extentdata=json.dumps({
   "iscsi_target_extent_blocksize": 4096,
   "iscsi_target_extent_name": targetname,
   "iscsi_target_extent_disk": "zvol/" + zpool + "/" + volname,
+  "iscsi_target_extent_serial": targetname,
 })
 
 ext = requests.post(
