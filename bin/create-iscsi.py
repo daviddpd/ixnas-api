@@ -1,3 +1,4 @@
+#!/usr/local/bin/python2.7
 import argparse
 import requests
 import pprint
@@ -6,54 +7,69 @@ import ConfigParser
 import re
 import os.path
 
-pp = pprint.PrettyPrinter(indent=4)    
+pp = pprint.PrettyPrinter(indent=4)
 
 
 parser = argparse.ArgumentParser(description='Create/Map a ZVOL on a TrueNAS or FreeNAS Appliance to an iSCSI target/lun.')
-parser.add_argument('--host', 
+parser.add_argument('--host',
         required=True,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='NAS Host name or IP'
         )
 
-parser.add_argument('--vmname', 
+parser.add_argument('--uuid',
+        required=False,
+        type=str,
+        nargs=1,
+        help='Bhyve UUID'
+        )
+
+parser.add_argument('--diskserial',
         required=True,
         type=str,
-        nargs=1, 
+        nargs=1,
+        help='Bhyve Disk Serial Number'
+        )
+
+
+parser.add_argument('--vmname',
+        required=True,
+        type=str,
+        nargs=1,
         help='Bhyve vm name'
         )
 
-parser.add_argument('--name', 
+parser.add_argument('--name',
         required=True,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zvol name'
         )
 
-parser.add_argument('--blocksize', 
+parser.add_argument('--blocksize',
         required=False,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zvol size'
         )
 
-parser.add_argument('--compression', 
+parser.add_argument('--compression',
         required=False,
         type=str,
-        default=['lz4'],
-        nargs=1, 
+        default=['off'],
+        nargs=1,
         help='Compression'
         )
 
-parser.add_argument('--zpool', 
+parser.add_argument('--zpool',
         required=False,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zpool name'
         )
 
-parser.add_argument('--sparse', 
+parser.add_argument('--sparse',
         required=False,
         action='store_true',
         help='Make as sparse volume'
@@ -77,10 +93,10 @@ for f in configfiles:
 config.read(cnf)
 u = config.get(args.host[0], "user");
 p = config.get(args.host[0], "password");
-bp = config.get(args.host[0], "basepath");        
+bp = config.get(args.host[0], "basepath");
 
 try:
-    iscsi_target_authgroup=config.get(args.host[0], "iscsi_target_authgroup");        
+    iscsi_target_authgroup=config.get(args.host[0], "iscsi_target_authgroup");
 except:
     iscsi_target_authgroup=''
 
@@ -90,17 +106,17 @@ except:
     iscsi_target_authtype=''
 
 try:
-    iscsi_target_portalgroup=config.get(args.host[0], "iscsi_target_portalgroup");        
+    iscsi_target_portalgroup=config.get(args.host[0], "iscsi_target_portalgroup");
 except:
     iscsi_target_portalgroup=''
 
 try:
-    iscsi_target_initiatorgroup=config.get(args.host[0], "iscsi_target_initiatorgroup");        
+    iscsi_target_initiatorgroup=config.get(args.host[0], "iscsi_target_initiatorgroup");
 except:
     iscsi_target_initiatorgroup=''
 
 try:    
-    iscsi_target_initialdigest=config.get(args.host[0], "iscsi_target_initialdigest");        
+    iscsi_target_initialdigest=config.get(args.host[0], "iscsi_target_initialdigest");
 except:
     iscsi_target_initialdigest=''
 
@@ -179,7 +195,7 @@ extentdata=json.dumps({
   "iscsi_target_extent_blocksize": 4096,
   "iscsi_target_extent_name": targetname,
   "iscsi_target_extent_disk": "zvol/" + zpool + "/" + volname,
-  "iscsi_target_extent_serial": targetname,
+  "iscsi_target_extent_serial": args.diskserial[0],
 })
 
 ext = requests.post(
@@ -213,9 +229,4 @@ ext = requests.post(
 print ext
 
 pp.pprint( ext.json() );
-
-
-
-
-
 

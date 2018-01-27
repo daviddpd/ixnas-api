@@ -1,3 +1,4 @@
+#!/usr/local/bin/python2.7
 import argparse
 import requests
 import pprint
@@ -6,60 +7,75 @@ import ConfigParser
 import re
 import os.path
 
-pp = pprint.PrettyPrinter(indent=4)    
+pp = pprint.PrettyPrinter(indent=4)
 
 
 parser = argparse.ArgumentParser(description='Create a ZVOL on a TrueNAS or FreeNAS Appliance')
-parser.add_argument('--host', 
+parser.add_argument('--host',
         required=True,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='NAS Host name or IP'
         )
 
-parser.add_argument('--vmname', 
+parser.add_argument('--uuid',
+        required=False,
+        type=str,
+        nargs=1,
+        help='Bhyve UUID'
+        )
+
+parser.add_argument('--diskserial',
+        required=False,
+        type=str,
+        nargs=1,
+        help='Bhyve Disk Serial Number'
+        )
+
+
+parser.add_argument('--vmname',
         required=True,
         type=str,
-        nargs=1, 
+        nargs=1,
         help='Bhyve vm name'
         )
 
-parser.add_argument('--name', 
+parser.add_argument('--name',
         required=True,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zvol name'
         )
 
-parser.add_argument('--size', 
+parser.add_argument('--size',
         required=True,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zvol size'
         )
-parser.add_argument('--blocksize', 
+parser.add_argument('--blocksize',
         required=False,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zvol size'
         )
 
-parser.add_argument('--compression', 
+parser.add_argument('--compression',
         required=False,
         type=str,
         default=['lz4'],
-        nargs=1, 
+        nargs=1,
         help='Compression'
         )
 
-parser.add_argument('--zpool', 
+parser.add_argument('--zpool',
         required=False,
-        type=str, 
-        nargs=1, 
+        type=str,
+        nargs=1,
         help='zpool name'
         )
 
-parser.add_argument('--sparse', 
+parser.add_argument('--sparse',
         required=False,
         action='store_true',
         help='Make as sparse volume'
@@ -83,7 +99,7 @@ for f in configfiles:
 config.read(cnf)
 u = config.get(args.host[0], "user");
 p = config.get(args.host[0], "password");
-bp = config.get(args.host[0], "basepath");        
+bp = config.get(args.host[0], "basepath");
 
 if len(bp):
     match = re.search("^" + bp + "/", args.name[0])
@@ -93,7 +109,7 @@ if len(bp):
     else:
         volname = bp + "/" + args.name[0]
 else:
-    volname = args.name[0]    
+    volname = args.name[0]
 
 try:
     args.zpool[0]
@@ -107,9 +123,14 @@ try:
 except:
     blocksize = config.get(args.host[0], "blocksize");
 
+try:
+    uuid = " / %s " % args.uuid[0]
+except:
+    uuid = '';
+
 
 data=json.dumps({
-  "comments": "iSCSI Bhyve zvol for %s" % args.vmname[0],
+  "comments": "iSCSI Bhyve zvol for %s %s" %  ( args.vmname[0], uuid ),
   "name": volname,
   "volsize": args.size[0],
   "compression": args.compression[0],
@@ -119,6 +140,7 @@ data=json.dumps({
   
 });
 
+print " ==> zpool : " + zpool
 pp.pprint( data );
 
 zvols = requests.post(
