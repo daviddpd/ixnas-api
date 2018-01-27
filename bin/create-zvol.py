@@ -6,6 +6,7 @@ import json
 import ConfigParser
 import re
 import os.path
+import sys
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -81,10 +82,16 @@ parser.add_argument('--sparse',
         help='Make as sparse volume'
         )
 
+parser.add_argument('--verbose',
+        required=False,
+        action='store_true',
+        help='Verbose Output/debugging'
+        )
 
 args = parser.parse_args()
 
-pp.pprint( args );
+if args.verbose:
+    pp.pprint( args );
 
 config = ConfigParser.RawConfigParser()
 
@@ -103,7 +110,6 @@ bp = config.get(args.host[0], "basepath");
 
 if len(bp):
     match = re.search("^" + bp + "/", args.name[0])
-    print match
     if match:
         volname = args.name[0]
     else:
@@ -140,8 +146,9 @@ data=json.dumps({
   
 });
 
-print " ==> zpool : " + zpool
-pp.pprint( data );
+if args.verbose:
+    print " ==> zpool : " + zpool
+    pp.pprint( data );
 
 zvols = requests.post(
     "http://%s/api/v1.0/storage/volume/%s/zvols/" % (args.host[0], zpool ),
@@ -150,9 +157,12 @@ zvols = requests.post(
     verify=False,
     data=data,
 )
+if args.verbose or zvols.status_code < 200 or zvols.status_code > 299:
+    print zvols
+    pp.pprint( zvols.json() );
+    if zvols.status_code < 200 or zvols.status_code > 299:
+        sys.exit(1)
 
-print zvols
+sys.exit(0)
 
-
-pp.pprint( zvols.json() );
 

@@ -6,11 +6,15 @@ import json
 import ConfigParser
 import re
 import os.path
+import uuid
+import sys
 
+_uuid = uuid.uuid1()
 pp = pprint.PrettyPrinter(indent=4)
 
 
 parser = argparse.ArgumentParser(description='Create/Map a ZVOL on a TrueNAS or FreeNAS Appliance to an iSCSI target/lun.')
+
 parser.add_argument('--host',
         required=True,
         type=str,
@@ -25,10 +29,13 @@ parser.add_argument('--uuid',
         help='Bhyve UUID'
         )
 
+
+_ds = "%x-%x-%02d" % ( _uuid.fields[0], _uuid.fields[1], 0 )
 parser.add_argument('--diskserial',
-        required=True,
+        required=False,
         type=str,
         nargs=1,
+        default=[ _ds ],
         help='Bhyve Disk Serial Number'
         )
 
@@ -75,10 +82,17 @@ parser.add_argument('--sparse',
         help='Make as sparse volume'
         )
 
+parser.add_argument('--verbose',
+        required=False,
+        action='store_true',
+        help='Verbose Output/debugging'
+        )
+
 
 args = parser.parse_args()
 
-pp.pprint( args );
+if args.verbose:
+    pp.pprint( args );
 
 config = ConfigParser.RawConfigParser()
 
@@ -122,7 +136,6 @@ except:
 
 if len(bp):
     match = re.search("^" + bp + "/", args.name[0])
-    print match
     if match:
         volname = args.name[0]
         targetname = re.sub("^" + bp + "/", '', args.name[0]);
@@ -130,7 +143,7 @@ if len(bp):
         volname = bp + "/" + args.name[0]
         targetname = args.name[0]
 else:
-    volname = args.name[0]    
+    volname = args.name[0]
 
 try:
     args.zpool[0]
@@ -150,9 +163,8 @@ targetdata=json.dumps({
   "iscsi_target_name": targetname,
 })
 
-print targetdata
-
-
+if args.verbose:
+    print targetdata
 
 target = requests.post(
     "http://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
@@ -162,10 +174,15 @@ target = requests.post(
     data=targetdata,
 )
 
-print target
+if args.verbose or target.status_code < 200 or target.status_code > 299:
+    print targetdata
+    print target
+    pp.pprint( target.json() );
+    if target.status_code < 200 or target.status_code > 299:
+        sys.exit(1)
+
 t = target.json();
 
-pp.pprint( target.json() );
 
 
 
@@ -187,8 +204,11 @@ targetgroup = requests.post(
     data=targetgroup_data,
 )
 
-print targetgroup
-pp.pprint( targetgroup.json() );
+if args.verbose or  targetgroup.status_code < 200 or targetgroup.status_code > 299:
+    print targetgroup
+    pp.pprint( targetgroup.json() );
+    if targetgroup.status_code < 200 or targetgroup.status_code > 299:
+        sys.exit(1)
 
 extentdata=json.dumps({
   "iscsi_target_extent_type": "Disk",
@@ -206,9 +226,11 @@ ext = requests.post(
     data=extentdata,
 )
 
-print ext
-
-pp.pprint( ext.json() );
+if args.verbose or ext.status_code < 200 or ext.status_code > 299:
+    print ext
+    pp.pprint( ext.json() );
+    if ext.status_code < 200 or ext.status_code > 299:
+        sys.exit(1)
 
 e = ext.json();
 
@@ -217,7 +239,9 @@ e2t=json.dumps({
   "iscsi_extent": e['id'],
 })
 
-print e2t
+if args.verbose:
+    print e2t
+    
 ext = requests.post(
     "http://%s//api/v1.0/services/iscsi/targettoextent/" % (args.host[0]),
     auth=(u, p),
@@ -226,7 +250,11 @@ ext = requests.post(
     data=e2t,
 )
 
-print ext
+if args.verbose or ext.status_code < 200 or ext.status_code > 299:
+    print ext
+    pp.pprint( ext.json() );
+    if ext.status_code < 200 or ext.status_code > 299:
+        sys.exit(1)
 
-pp.pprint( ext.json() );
 
+sys.exit(0)

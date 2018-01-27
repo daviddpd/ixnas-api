@@ -6,44 +6,50 @@ FreeNAS/TrueNAS scripts to help / hook into vm-bhyve for iSCSI creation.
 ## Setup config
     cp config/ixnas-api.sample.ini config/ixnas-api.ini
 
-Edit config, required [HOSTNAME], user= and password=
+Ideally, maybe better to do this, for a global host config:
+    sudo mkdir -p /usr/local/etc/ixnas-api/config
+    cp config/ixnas-api.sample.ini /usr/local/etc/ixnas-api/config/ixnas-api.ini
 
-For iSCSI, iscsi_target_portalgroup= and iscsi_target_initiatorgroup= will be needed. 
-    
+Edit config, required [HOSTNAME], user= and password=,  The HOSTNAME is whatever you'll be using on the command line, 
+so if using short, non-FQDN, then use those in the config.
+
+For iSCSI, iscsi_target_portalgroup= and iscsi_target_initiatorgroup= will be needed.  You need to set these up manually in the
+FreeNAS/TrueNAS UI.  Most likely, they will both simply be the number 1.
+  
 ## Usage
 
-## create sparse zvol named testing6, for testing6.sjc1 Bhyve VM:
+## create sparse zvol named testing10.iad1, for testing10.iad1 Bhyve VM:
 
-    python2.7 bin/create-zvol.py --host prodnas.ixsystems.com --vmname testing6.sjc1 --name "testing6" --size "20G" --sparse
+    > bin/create-zvol.py --host nas1 --vmname testing10.iad1 --name "testing10.iad1" --size "20G" --sparse
 
 ## Create the complete iSCSI setup, 
 
 This creates Targets, Extents and the Target-Extent association.  
 
-     python2.7 bin/create-iscsi.py --host prodnas.ixsystems.com --vmname testing6.sjc1 --name "testing6"
+    > bin/create-iscsi.py --host nas1 --vmname testing10.iad1 --name "testing10.iad1"
      
-The extent's serial number is also test to the target name, so that mappings can be done via names with geom DISKID:
+Due to a 16 byte length limit for the extent's serial number, if the --diskserial is past, it is set that that, otherwise
+a UUID is generated, and the default string is built in the form of "${time_low}-${time_mid}-00".
+
+
+    > sudo iscsictl -A -p nas1 -t iqn.2005-08.com.ixsystems.iad1:testing10.iad1
+
+    > sudo iscsictl -L
+
+        Target name                          Target portal    State
+        iqn.2005-08.com.ixsystems.iad1:testing10.iad1 nas1             Connected: da0
 
     > glabel status
-                                          Name  Status  Components
-                          diskid/DISK-testing5     N/A  da0
-                          diskid/DISK-testing6     N/A  da1
+                                      Name  Status  Components                                      
+               diskid/DISK-a09bb06e-2fe-00     N/A  da0
 
-    > sudo iscsictl -A -p prodnas.ixsystems.com -t iqn.2005-08.com.ixsystems.sjc1:testing6
-    > sudo iscsictl -L
-    Target name                          Target portal    State
-    iqn.2005-08.com.ixsystems.sjc1:testing5 prodnas.ixsystems.com Connected: da0
-    iqn.2005-08.com.ixsystems.sjc1:testing6 prodnas.ixsystems.com Connected: da1
+    > ls -l /dev/diskid/
+        total 0
+        crw-r-----  1 root  operator  0x94 Jan 27 01:13 DISK-a09bb06e-2fe-00
 
-    > ls -l /dev/diskid/*
-    crw-r-----  1 root  operator   0xfe Jan 19 01:44 /dev/diskid/DISK-testing5
-    crw-r-----  1 root  operator  0x102 Jan 19 01:52 /dev/diskid/DISK-testing6
-
-    
 ## UX
 
-Not user friendly, will be back end call for vm-bhyve
-    
+Things should be non-verbose by default, and should bail out and exit with rc=1 if a problem happens.    
 
     
     
