@@ -56,9 +56,10 @@ parser.add_argument('--name',
 
 parser.add_argument('--blocksize',
         required=False,
-        type=str,
+        default=[ 512 ],
+        type=int,
         nargs=1,
-        help='zvol size'
+        help='Extent Logical Block Size'
         )
 
 parser.add_argument('--compression',
@@ -153,9 +154,9 @@ except:
     
 try:
     args.blocksize[0]
-    zpool = args.blocksize[0]
+    blocksize = args.blocksize[0]
 except:
-    blocksize = config.get(args.host[0], "blocksize");
+    blocksize = 512
 
 
 targetdata=json.dumps({
@@ -212,7 +213,7 @@ if args.verbose or  targetgroup.status_code < 200 or targetgroup.status_code > 2
 
 extentdata=json.dumps({
   "iscsi_target_extent_type": "Disk",
-  "iscsi_target_extent_blocksize": 4096,
+  "iscsi_target_extent_blocksize": blocksize,
   "iscsi_target_extent_name": targetname,
   "iscsi_target_extent_disk": "zvol/" + zpool + "/" + volname,
   "iscsi_target_extent_serial": args.diskserial[0],
