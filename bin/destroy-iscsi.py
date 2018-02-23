@@ -139,7 +139,9 @@ ext2target = requests.get(
     headers={'Content-Type': 'application/json'},
     verify=False,
 )
-pp.pprint(ext2target)
+if args.verbose:
+    pp.pprint(ext2target)
+
 requestCheck(args, ext2target)
 
 ext = requests.get(
@@ -205,10 +207,9 @@ for i in ext2target.json():
     _targets_byname[tname]['extent'] = _extents_byid[eid]
     
     
+if args.verbose:
+    pp.pprint ( _targets_byname ) 
     
-
-#pp.pprint ( _targets_byid ) 
-pp.pprint ( _targets_byname ) 
 name = args.name[0]
     
 try:

@@ -103,8 +103,9 @@ zvols = requests.get(
     verify=False,
 )
 
-print " get id : " 
-pp.pprint( zvols.json() );
+if args.verbose:
+    print " get id : " 
+    pp.pprint( zvols.json() );
 
 zvols = requests.delete(
     url,
