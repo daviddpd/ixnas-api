@@ -97,7 +97,7 @@ if args.verbose:
 
 config = ConfigParser.RawConfigParser()
 
-configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api/config/ixnas-api.ini" ]
+configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api.ini" ]
 cnf = False
 for f in configfiles:
     if os.path.isfile(f):
