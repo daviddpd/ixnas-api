@@ -21,21 +21,6 @@ parser.add_argument('--host',
         help='NAS Host name or IP'
         )
 
-parser.add_argument('--uuid',
-        required=False,
-        type=str,
-        nargs=1,
-        help='Bhyve UUID'
-        )
-
-parser.add_argument('--diskserial',
-        required=False,
-        type=str,
-        nargs=1,
-        help='Bhyve Disk Serial Number'
-        )
-
-
 parser.add_argument('--vmname',
         required=True,
         type=str,
@@ -50,38 +35,12 @@ parser.add_argument('--name',
         help='zvol name'
         )
 
-parser.add_argument('--size',
-        required=True,
-        type=str,
-        nargs=1,
-        help='zvol size'
-        )
-parser.add_argument('--blocksize',
-        required=False,
-        type=str,
-        nargs=1,
-        help='zvol size'
-        )
-
-parser.add_argument('--compression',
-        required=False,
-        type=str,
-        default=['lz4'],
-        nargs=1,
-        help='Compression'
-        )
 
 parser.add_argument('--zpool',
         required=False,
         type=str,
         nargs=1,
         help='zpool name'
-        )
-
-parser.add_argument('--sparse',
-        required=False,
-        action='store_true',
-        help='Make as sparse volume'
         )
 
 parser.add_argument('--verbose',
@@ -126,42 +85,36 @@ except:
     zpool = config.get(args.host[0], "zpool");
     
 try:
-    args.blocksize[0]
-    zpool = args.blocksize[0]
-except:
-    blocksize = config.get(args.host[0], "blocksize");
-
-try:
     uuid = " / %s " % args.uuid[0]
 except:
     uuid = '';
 
 
-data=json.dumps({
-  "comments": "iSCSI Bhyve zvol for %s %s" %  ( args.vmname[0], uuid ),
-  "name": volname,
-  "volsize": args.size[0],
-  "compression": args.compression[0],
-  "sparse": args.sparse,
-  "force": True,
-  "blocksize": blocksize,
-  
-});
+url = "https://%s/api/v1.0/storage/volume/%s/zvols/%s" % (args.host[0], zpool, volname )
 
 if args.verbose:
     print " ==> zpool : " + zpool
-    pp.pprint( data );
+    print " ==> url : " + url
 
-zvols = requests.post(
-    "https://%s/api/v1.0/storage/volume/%s/zvols/" % (args.host[0], zpool ),
+zvols = requests.get(
+    url,
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
-    data=data,
+)
+
+if args.verbose:
+    print " get id : " 
+    pp.pprint( zvols.json() );
+
+zvols = requests.delete(
+    url,
+    auth=(u, p),
+    headers={'Content-Type': 'application/json'},
+    verify=False,
 )
 if args.verbose or zvols.status_code < 200 or zvols.status_code > 299:
     print zvols
-    pp.pprint( zvols.json() );
     if zvols.status_code < 200 or zvols.status_code > 299:
         sys.exit(1)
 

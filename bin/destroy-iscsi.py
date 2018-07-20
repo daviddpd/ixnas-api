@@ -8,6 +8,8 @@ import re
 import os.path
 import uuid
 import sys
+import urllib3
+urllib3.disable_warnings()
 
 sys.path.append(os.path.abspath("/home/dpd/ixnas-api/bin"))
 
@@ -69,7 +71,7 @@ if args.verbose:
 
 config = ConfigParser.RawConfigParser()
 
-configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api/config/ixnas-api.ini" ]
+configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api.ini" ]
 cnf = False
 for f in configfiles:
     if os.path.isfile(f):
@@ -132,16 +134,18 @@ except:
 
 
 ext2target = requests.get(
-    "http://%s//api/v1.0/services/iscsi/targettoextent/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/targettoextent/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
 )
-pp.pprint(ext2target)
+if args.verbose:
+    pp.pprint(ext2target)
+
 requestCheck(args, ext2target)
 
 ext = requests.get(
-    "http://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -150,7 +154,7 @@ ext = requests.get(
 requestCheck(args, ext)
 
 targetgroup = requests.get(
-    "http://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -159,7 +163,7 @@ targetgroup = requests.get(
 requestCheck(args, targetgroup)
 
 target = requests.get(
-    "http://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -203,17 +207,16 @@ for i in ext2target.json():
     _targets_byname[tname]['extent'] = _extents_byid[eid]
     
     
+if args.verbose:
+    pp.pprint ( _targets_byname ) 
     
-
-#pp.pprint ( _targets_byid ) 
-pp.pprint ( _targets_byname ) 
 name = args.name[0]
     
 try:
     _targettoextent_id = _targets_byname[name]['targettoextent']['id']
 
     ext2target = requests.delete(
-        "http://%s//api/v1.0/services/iscsi/targettoextent/%d" % (args.host[0], _targettoextent_id),
+        "https://%s//api/v1.0/services/iscsi/targettoextent/%d" % (args.host[0], _targettoextent_id),
         auth=(u, p),
         headers={'Content-Type': 'application/json'},
         verify=False,
@@ -228,7 +231,7 @@ try:
     _extent_id = _targets_byname[name]['extent']['id']
     
     ext = requests.delete(
-        "http://%s//api/v1.0/services/iscsi/extent/%d" % (args.host[0], _extent_id),
+        "https://%s//api/v1.0/services/iscsi/extent/%d" % (args.host[0], _extent_id),
         auth=(u, p),
         headers={'Content-Type': 'application/json'},
         verify=False,
@@ -241,7 +244,7 @@ except:
 try:
     _targetgroup_id = _targets_byname[name]['targetgroup']['id']
     targetgroup = requests.delete(
-        "http://%s//api/v1.0/services/iscsi/targetgroup/%d" % (args.host[0], _targetgroup_id),
+        "https://%s//api/v1.0/services/iscsi/targetgroup/%d" % (args.host[0], _targetgroup_id),
         auth=(u, p),
         headers={'Content-Type': 'application/json'},
         verify=False,
@@ -256,7 +259,7 @@ except:
 try:
     _target_id = _targets_byname[name]['id']
     target = requests.delete(
-        "http://%s//api/v1.0/services/iscsi/target/%d" % (args.host[0], _target_id),
+        "https://%s//api/v1.0/services/iscsi/target/%d" % (args.host[0], _target_id),
         auth=(u, p),
         headers={'Content-Type': 'application/json'},
         verify=False,
@@ -280,7 +283,7 @@ except:
 #     print targetdata
 # 
 # target = requests.post(
-#     "http://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
+#     "https://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
 #     auth=(u, p),
 #     headers={'Content-Type': 'application/json'},
 #     verify=False,
@@ -300,7 +303,7 @@ except:
 # 
 # 
 # 
-# #POST /api/v1.0/services/iscsi/targetgroup/ HTTP/1.1
+# #POST /api/v1.0/services/iscsi/targetgroup/ https/1.1
 # #Content-Type: application/json
 # 
 # targetgroup_data = json.dumps({
@@ -310,7 +313,7 @@ except:
 # })
 # 
 # targetgroup = requests.post(
-#     "http://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
+#     "https://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
 #     auth=(u, p),
 #     headers={'Content-Type': 'application/json'},
 #     verify=False,
@@ -332,7 +335,7 @@ except:
 # })
 # 
 # ext = requests.post(
-#     "http://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
+#     "https://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
 #     auth=(u, p),
 #     headers={'Content-Type': 'application/json'},
 #     verify=False,

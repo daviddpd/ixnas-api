@@ -8,6 +8,8 @@ import re
 import os.path
 import uuid
 import sys
+import urllib3
+urllib3.disable_warnings()
 
 _uuid = uuid.uuid1()
 pp = pprint.PrettyPrinter(indent=4)
@@ -97,7 +99,7 @@ if args.verbose:
 
 config = ConfigParser.RawConfigParser()
 
-configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api/config/ixnas-api.ini" ]
+configfiles = [ "./ixnas-api.ini", "./config/ixnas-api.ini", "/usr/local/etc/ixnas-api.ini" ]
 cnf = False
 for f in configfiles:
     if os.path.isfile(f):
@@ -168,7 +170,7 @@ if args.verbose:
     print targetdata
 
 target = requests.post(
-    "http://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/target/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -188,7 +190,7 @@ t = target.json();
 
 
 
-#POST /api/v1.0/services/iscsi/targetgroup/ HTTP/1.1
+#POST /api/v1.0/services/iscsi/targetgroup/ https/1.1
 #Content-Type: application/json
 
 targetgroup_data = json.dumps({
@@ -198,7 +200,7 @@ targetgroup_data = json.dumps({
 })
 
 targetgroup = requests.post(
-    "http://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/targetgroup/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -220,7 +222,7 @@ extentdata=json.dumps({
 })
 
 ext = requests.post(
-    "http://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/extent/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
@@ -245,7 +247,7 @@ if args.verbose:
     print e2t
     
 ext = requests.post(
-    "http://%s//api/v1.0/services/iscsi/targettoextent/" % (args.host[0]),
+    "https://%s//api/v1.0/services/iscsi/targettoextent/" % (args.host[0]),
     auth=(u, p),
     headers={'Content-Type': 'application/json'},
     verify=False,
