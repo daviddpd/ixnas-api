@@ -238,6 +238,7 @@ e = ext.json();
 e2t=json.dumps({
   "iscsi_target": t['id'],
   "iscsi_extent": e['id'],
+  "iscsi_lunid": 1,
 })
 
 if args.verbose:
